@@ -145,8 +145,28 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Redirect to dashboard on success
-                    window.location.href = '/api/v1/user/dashboard';
+                    // Store token and user data
+                    if (data.data && data.data.token) {
+                        localStorage.setItem('token', data.data.token);
+                        localStorage.setItem('user', JSON.stringify(data.data.user || data.data));
+                        
+                        // Redirect to appropriate dashboard based on user type
+                        showMessage('Account created successfully! Redirecting...', 'success');
+                        setTimeout(() => {
+                            const userType = data.data.user?.type || data.data?.type;
+                            if (userType === 'seller') {
+                                window.location.href = '/api/v1/user/dashboard?token=' + data.data.token;
+                            } else {
+                                window.location.href = '/api/v1/user/dashboard?token=' + data.data.token;
+                            }
+                        }, 1000);
+                    } else {
+                        // Fallback to login page
+                        showMessage('Account created successfully! Please login.', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/api/v1/user/login';
+                        }, 1500);
+                    }
                 } else {
                     const errorMsg = data.error?.message || data.message || 'Failed to create account. Please try again.';
                     showMessage(errorMsg, 'error');
@@ -207,9 +227,9 @@
                         localStorage.setItem('user', JSON.stringify(data.data.user));
                         showLoginMessage('Login successful! Redirecting to dashboard...', 'success');
                         
-                        // Redirect to dashboard after 1 second
+                        // Redirect to dashboard after 1 second with token
                         setTimeout(() => {
-                            window.location.href = '/api/v1/user/dashboard';
+                            window.location.href = '/api/v1/user/dashboard?token=' + data.data.token;
                         }, 1000);
                     } else {
                         showLoginMessage('Login successful but token not received.', 'error');

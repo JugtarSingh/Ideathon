@@ -6,12 +6,26 @@ class CrudRepository {
     }
     async create(data){
         try {
+            // Check if mongoose is connected
+            if (this.model.db.readyState !== 1) {
+                console.log('Database not connected');
+                throw new AppError("Database connection not available", StatusCodes.SERVICE_UNAVAILABLE);
+            }
+
             console.log("Data in crud repo" , data);
             const response = await this.model.create(data);
             return response;
         } catch (error) {
-            console.log(error);
-            throw new AppError("Error in creating the resource", StatusCodes.INTERNAL_SERVER_ERROR);
+            console.error('Repository create error:', error);
+            // Re-throw AppError as-is
+            if (error instanceof AppError) {
+                throw error;
+            }
+            // Re-throw MongoDB/Mongoose errors with their original messages
+            if (error.name === 'MongoServerError' || error.name === 'ValidationError') {
+                throw error;
+            }
+            throw new AppError(`Error in creating the resource: ${error.message || 'Unknown error'}`, StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
     async getAll(){
@@ -24,10 +38,18 @@ class CrudRepository {
     }
     async get(data){
         try {
+            // Check if mongoose is connected
+            if (this.model.db.readyState !== 1) {
+                console.log('Database not connected, returning null');
+                return null;
+            }
+            
             const response = await this.model.findOne(data);
             return response;
         } catch (error) {
-            throw new AppError("Error in fetching the resource", StatusCodes.INTERNAL_SERVER_ERROR);
+            console.error('Error in repository get:', error.message);
+            // Return null instead of throwing to prevent hanging
+            return null;
         }
     }
 

@@ -16,23 +16,71 @@ function hashPassword(password){
 
 async function createUser(req,res){
     try {
-        const user = await UserService.createUser({
-            name : req.body.name,
-            email : req.body.email,
-            password : hashPassword(req.body.password),
-            type : req.body.type,
-            location : {
+        // Validate required fields
+        if (!req.body.name || !req.body.email || !req.body.password) {
+            ErrorResponse.error = {
+                message: 'Name, email, and password are required fields',
+                statusCode: StatusCodes.BAD_REQUEST
+            };
+            ErrorResponse.message = 'Missing required fields';
+            return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(ErrorResponse);
+        }
+
+        // Validate location structure
+        if (!req.body.location || !req.body.location.coordinates || !Array.isArray(req.body.location.coordinates)) {
+            // Set default location if not provided
+            req.body.location = {
                 type: "Point",
-                coordinates: req.body.location.coordinates,
-                addressDetails: req.body.location.addressDetails
+                coordinates: [0, 0], // Default coordinates
+                addressDetails: req.body.location?.addressDetails || {}
+            };
+        }
+
+        // Validate and set default type
+        const userType = req.body.type === 'seller' ? 'seller' : 'user';
+
+        const userData = {
+            name: req.body.name.trim(),
+            email: req.body.email.trim().toLowerCase(),
+            password: hashPassword(req.body.password),
+            type: userType,
+            location: {
+                type: "Point",
+                coordinates: req.body.location.coordinates || [0, 0],
+                addressDetails: req.body.location.addressDetails || {}
             }
-        })
-        SuccessResponse.data = user;
+        };
+
+        const user = await UserService.createUser(userData);
+        
+        // Remove password from response
+        const userObject = user.toObject();
+        delete userObject.password;
+
+        // Generate JWT token for the new user
+        const token = jwt.sign(
+            { 
+                id: user._id, 
+                email: user.email,
+                type: user.type
+            },
+            serverConfig.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        SuccessResponse.data = {
+            user: userObject,
+            token: token
+        };
         SuccessResponse.message = "User created successfully";
         return res
         .status(StatusCodes.CREATED)
         .json(SuccessResponse);
     } catch (error) {
+        console.error('Create user error:', error);
+        
         // Handle MongoDB duplicate key error (unique email)
         if (error.name === 'MongoServerError' && error.code === 11000) {
             ErrorResponse.error = {
@@ -44,6 +92,7 @@ async function createUser(req,res){
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
         }
+        
         // Handle validation errors
         if (error.name === 'ValidationError') {
             ErrorResponse.error = {
@@ -55,10 +104,27 @@ async function createUser(req,res){
             .status(StatusCodes.BAD_REQUEST)
             .json(ErrorResponse);
         }
-        ErrorResponse.error = error;
-        ErrorResponse.message = error.message || "Failed to create user";
+
+        // Handle AppError with proper message
+        if (error.statusCode) {
+            ErrorResponse.error = {
+                message: error.message || 'Failed to create user',
+                statusCode: error.statusCode
+            };
+            ErrorResponse.message = error.message || 'Failed to create user';
+            return res
+            .status(error.statusCode)
+            .json(ErrorResponse);
+        }
+
+        // Generic error
+        ErrorResponse.error = {
+            message: error.message || 'Failed to create user. Please check your input and try again.',
+            statusCode: StatusCodes.INTERNAL_SERVER_ERROR
+        };
+        ErrorResponse.message = error.message || 'Failed to create user';
         return res
-        .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
         .json(ErrorResponse);
     }
 }
@@ -71,16 +137,74 @@ async function getUser(req,res){
     }
 }
 
-async function loginformRender(req,res){
-    res
-    .render('../public/views/login.ejs');
+async function loginformRender(req, res){
+    // Check if request wants JSON response (for AJAX)
+    if (req.query.render === 'true' || req.headers.accept?.includes('application/json')) {
+        // Return login form HTML
+        return res.render('login', {});
+    }
+    // Otherwise render full page
+    res.render('login', {});
 }
 
 async function dashboardRender(req, res) {
-    // Render the dashboard view. Accept an optional message via query string (e.g. ?message=Welcome)
-    const message = req.query && req.query.message ? req.query.message : null;
-    // If you later add sessions, you can pass the logged-in user here.
-    return res.render('dashboard', { message, user: null });
+    try {
+        // Get token from query or header
+        const token = req.query.token || req.headers.authorization?.split(' ')[1];
+        
+        if (!token) {
+            return res.redirect('/api/v1/user/login');
+        }
+
+        // Verify token and get user
+        const jwt = require('jsonwebtoken');
+        const { serverConfig } = require('../config');
+        const decoded = jwt.verify(token, serverConfig.JWT_SECRET);
+        const user = await UserService.getUser({ _id: decoded.id });
+        
+        if (!user) {
+            return res.redirect('/api/v1/user/login');
+        }
+
+        // Populate user cart
+        await user.populate('cart');
+        const cartCount = user.cart ? user.cart.length : 0;
+
+        // Check if user is seller (retailer) or regular user
+        if (user.type === 'seller') {
+            // Render retailer dashboard
+            const { ProductService } = require('../service');
+            const { OrderService } = require('../service');
+            
+            const products = await ProductService.getProducts({});
+            const sellerProducts = products.filter(p => p.userId && p.userId.toString() === user._id.toString());
+            
+            const orders = await OrderService.getOrdersBySeller(user._id);
+            
+            return res.render('retailer-dashboard', {
+                user: user,
+                products: sellerProducts,
+                orders: orders,
+                cartCount: cartCount,
+                message: req.query.message || null
+            });
+        } else {
+            // Render user dashboard
+            const { OrderService } = require('../service');
+            const orders = await OrderService.getOrdersByUser(user._id);
+            
+            return res.render('user-dashboard', {
+                user: user,
+                cart: user.cart || [],
+                orders: orders,
+                cartCount: cartCount,
+                message: req.query.message || null
+            });
+        }
+    } catch (error) {
+        console.error('Dashboard render error:', error);
+        return res.redirect('/api/v1/user/login');
+    }
 }
 
 async function login(req, res) {

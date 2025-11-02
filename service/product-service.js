@@ -18,13 +18,31 @@ async function createProduct(data){
 async function getProducts(data){
     try {
         let products = await productRepository.getProduct(data);
+        
+        // Handle case where products array might be empty or null
+        if (!products || !Array.isArray(products)) {
+            return [];
+        }
+
+        // Safely populate userId, handling cases where userId might be null or invalid
         products = await Promise.all(products.map(async (product) => {
-            return await product.populate('userId', 'name email');
+            try {
+                if (product.userId) {
+                    await product.populate('userId', 'name email');
+                }
+                return product;
+            } catch (populateError) {
+                // If populate fails, return product without populated userId
+                console.log('Error populating userId for product:', product._id, populateError.message);
+                return product;
+            }
         }));
+        
         return products;
     } catch (error) {
-        console.log(error);
-        throw new AppError('Unable to fetch the products', StatusCodes.INTERNAL_SERVER_ERROR);
+        console.error('Error in getProducts:', error);
+        // Return empty array instead of throwing error to prevent infinite loading
+        return [];
     }
 }
 
