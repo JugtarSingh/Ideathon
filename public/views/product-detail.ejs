@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %> - Product Details</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" href="/css/product-grid.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .product-detail-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .product-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+        .product-images {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .main-image {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .thumbnail-images {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+        }
+        .thumbnail {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+        .thumbnail:hover {
+            border-color: #667eea;
+        }
+        .product-info-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .product-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .product-price {
+            font-size: 2rem;
+            color: #667eea;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        .product-description {
+            color: #7f8c8d;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+        .seller-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+        }
+        .seller-info h3 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        .seller-detail {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .seller-detail i {
+            color: #667eea;
+            width: 20px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            flex: 1;
+        }
+        @media (max-width: 768px) {
+            .product-detail-grid {
+                grid-template-columns: 1fr;
+            }
+            .main-image {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                <i class="fas fa-store"></i>
+                E-Commerce
+            </a>
+            <ul class="navbar-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/bestsellers">Bestsellers</a></li>
+                <li><a href="/categories">Categories</a></li>
+            </ul>
+            <div class="navbar-icons">
+                <% if (user) { %>
+                    <div class="user-profile" onclick="showProfile()">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="user-profile-name"><%= user.name %></span>
+                    </div>
+                    <a href="/cart" class="navbar-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <% if (cartCount > 0) { %>
+                            <span class="cart-badge"><%= cartCount %></span>
+                        <% } %>
+                    </a>
+                <% } else { %>
+                    <div class="navbar-icon" onclick="showLoginForm()" title="Login">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <a href="/cart" class="navbar-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </a>
+                <% } %>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <div class="product-detail-container">
+            <div class="product-detail-grid">
+                <!-- Product Images -->
+                <div class="product-images">
+                    <img id="mainImage" 
+                         src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=' %>" 
+                         alt="<%= product.name %>" 
+                         class="main-image"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';"
+                    >
+                    <% if (product.image && Array.isArray(product.image) && product.image.length > 1) { %>
+                        <div class="thumbnail-images">
+                            <% product.image.forEach((img, index) => { %>
+                                <img src="<%= img %>" 
+                                     alt="Thumbnail <%= index + 1 %>" 
+                                     class="thumbnail"
+                                     onclick="changeMainImage('<%= img %>')"
+                                     onerror="this.style.display='none';"
+                                >
+                            <% }); %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Product Information -->
+                <div class="product-info-section">
+                    <h1 class="product-title"><%= product.name || 'Product' %></h1>
+                    
+                    <% if (product.bestseller) { %>
+                        <span class="bestseller-badge">Bestseller</span>
+                    <% } %>
+
+                    <div class="product-price">$<%= typeof product.price === 'number' ? product.price.toFixed(2) : '0.00' %></div>
+
+                    <div class="product-description">
+                        <h3>Description</h3>
+                        <p><%= product.description || 'No description available' %></p>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                        <strong>Category:</strong> <span style="text-transform: capitalize;"><%= product.category || 'N/A' %></span>
+                    </div>
+
+                    <!-- Seller Information -->
+                    <% if (product.userId) { %>
+                        <div class="seller-info">
+                            <h3>Seller Information</h3>
+                            <div class="seller-detail">
+                                <i class="fas fa-user"></i>
+                                <span><strong>Name:</strong> <%= product.userId.name || 'N/A' %></span>
+                            </div>
+                            <div class="seller-detail">
+                                <i class="fas fa-envelope"></i>
+                                <span><strong>Contact:</strong> <%= product.userId.email || 'N/A' %></span>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button class="btn btn-primary btn-large" onclick="addToCart('<%= product._id %>')">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <p>Your trusted online shopping destination.</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 E-Commerce. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/js/auth-helper.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+
+        function changeMainImage(imageSrc) {
+            document.getElementById('mainImage').src = imageSrc;
+        }
+
+        function showLoginForm() {
+            window.location.href = '/api/v1/user/login';
+        }
+
+        function showProfile() {
+            window.location.href = '/api/v1/user/dashboard?token=' + token;
+        }
+
+        async function addToCart(productId) {
+            <% if (!user) { %>
+                showLoginForm();
+                return;
+            <% } %>
+
+            try {
+                const response = await fetch('/api/v1/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ productId })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Product added to cart!');
+                    location.reload();
+                } else {
+                    alert(data.message || 'Failed to add to cart');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
+
