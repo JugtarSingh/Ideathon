@@ -39,7 +39,14 @@ class CrudRepository {
             throw new AppError("Error in updating the resource", StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
-
+    async delete(id){
+        try {
+            const response = await this.model.findByIdAndDelete(id);
+            return response;
+        } catch (error) {
+            throw new AppError("Error in deleting the resource", StatusCodes.INTERNAL_SERVER_ERROR); 
+        }
+    }
 
 }
 

@@ -42,6 +42,16 @@ const userSchema = new mongoose.Schema({
     location: {
         type: locationSchema, 
         required: true
+    },
+    products: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Product',                
+        default: []
+    },
+    cart: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Product',
+        default: []
     }
 });
 

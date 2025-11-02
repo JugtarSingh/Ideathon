@@ -76,9 +76,11 @@ async function loginformRender(req,res){
     .render('../public/views/login.ejs');
 }
 
-async function dashboardRender(req,res){
-    res
-    .render('../public/views/dashboard.ejs');
+async function dashboardRender(req, res) {
+    // Render the dashboard view. Accept an optional message via query string (e.g. ?message=Welcome)
+    const message = req.query && req.query.message ? req.query.message : null;
+    // If you later add sessions, you can pass the logged-in user here.
+    return res.render('dashboard', { message, user: null });
 }
 
 async function login(req, res) {
