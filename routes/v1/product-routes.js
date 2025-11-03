@@ -5,7 +5,22 @@ const { authenticate, requireSeller } = require('../../middleware/auth-middlewar
 const router = express.Router();
 
 // Create a new product (with image upload support)
-router.post('/create', authenticate, requireSeller, upload.array('images', 5), ProductController.createProduct);
+router.post(
+    '/create',
+    authenticate,
+    requireSeller,
+    (req, res, next) => {
+        // Wrap multer to gracefully handle errors and continue without files
+        upload.array('images', 5)(req, res, (err) => {
+            if (err) {
+                req.multerError = err;
+                req.files = [];
+            }
+            next();
+        });
+    },
+    ProductController.createProduct
+);
 
 // Get products (supports query filters: ?category=...&price=min-max)
 router.get('/', ProductController.getProducts);

@@ -46,7 +46,7 @@ async function authenticate(req, res, next) {
 }
 
 function requireSeller(req, res, next) {
-    if (!req.user || req.user.type !== 'seller') {
+    if (!req.user || String(req.user.type).trim().toLowerCase() !== 'seller') {
         return res.status(StatusCodes.FORBIDDEN).json({
             success: false,
             message: 'Seller access required'
