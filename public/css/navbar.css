@@ -109,6 +109,15 @@
     font-weight: 500;
 }
 
+/* Highlight dashboard-related links */
+.dashboard-link {
+    color: #ffeb3b !important;
+    font-weight: 600;
+}
+.dashboard-link:hover {
+    color: #ffd54f !important;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .navbar {

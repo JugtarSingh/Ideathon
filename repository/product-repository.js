@@ -20,7 +20,7 @@ class ProductRepository extends CrudRepository{
                 const [minPrice , maxPrice] = filters.price.split('-');
                 customFilters.price = { $gte:minPrice , $lte:maxPrice};
             }
-            const products = await Product.find(customFilters);
+            const products = await Product.find(customFilters).sort({ createdAt: -1 });
             return products || [];
         } catch (error) {
             console.error('Error in getProduct:', error.message);

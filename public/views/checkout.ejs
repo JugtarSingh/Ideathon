@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/product-grid.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand"><i class="fas fa-store"></i> E-Commerce</a>
+            <ul class="navbar-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/categories">Categories</a></li>
+            </ul>
+            <div class="navbar-icons">
+                <div class="user-profile">
+                    <i class="fas fa-user-circle"></i>
+                    <span class="user-profile-name"><%= user.name %></span>
+                </div>
+                <a href="/cart" class="navbar-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <% if (cartCount > 0) { %>
+                        <span class="cart-badge"><%= cartCount %></span>
+                    <% } %>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div class="dashboard-container">
+            <div class="dashboard-card">
+                <h2 class="card-title">Order Summary</h2>
+                <% if (cart && cart.length > 0) { %>
+                <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                    <% cart.forEach(p => { %>
+                    <div class="product-card-wrapper">
+                        <div class="product-card">
+                            <img src="<%= (p.image && Array.isArray(p.image) && p.image.length > 0) ? p.image[0] : '/assets/laptop.jfif' %>" class="product-image" loading="lazy" style="height:180px; object-fit:cover;" onerror="this.onerror=null; this.src='/assets/laptop.jfif';" />
+                            <div class="product-info">
+                                <h3 class="product-name"><%= p.name %></h3>
+                                <p class="product-price">$<%= p.price.toFixed(2) %></p>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+                <div style="margin-top:1rem;font-weight:bold;">Total: $<%= cart.reduce((s,p)=>s+p.price,0).toFixed(2) %></div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🛒</div>
+                        <h3>Your cart is empty</h3>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="dashboard-card">
+                <h2 class="card-title">Shipping & Payment</h2>
+                <div class="row" style="gap:1rem; align-items:stretch;">
+                    <div class="form-group" style="flex:1; background:#f8f9fa; padding:1rem; border-radius:10px;">
+                        <label style="display:block; font-weight:600; margin-bottom:0.5rem;">Delivery Address</label>
+                        <div style="line-height:1.8;">
+                            <div><strong>Street:</strong> <%= user.location?.addressDetails?.street || 'N/A' %></div>
+                            <div><strong>City:</strong> <%= user.location?.addressDetails?.city || 'N/A' %></div>
+                            <div><strong>State:</strong> <%= user.location?.addressDetails?.state || 'N/A' %></div>
+                            <div><strong>Postal Code:</strong> <%= user.location?.addressDetails?.postalCode || 'N/A' %></div>
+                            <div><strong>Country:</strong> <%= user.location?.addressDetails?.country || 'N/A' %></div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                        <label>Payment Method</label>
+                        <select id="payment" required>
+                            <option value="cod" selected>Cash on Delivery</option>
+                            <option value="online">Online</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="placeOrderBtn" class="btn btn-primary" style="margin-top:1rem;">Place Order</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/auth-helper.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        const productIds = <%= JSON.stringify(cart ? cart.map(p => p._id.toString()) : []) %>;
+        const addressFromUser = <%= JSON.stringify(user.location && user.location.addressDetails ? user.location.addressDetails : {}) %>;
+
+        document.getElementById('placeOrderBtn').addEventListener('click', async function() {
+            const address = addressFromUser;
+            const paymentMethod = document.getElementById('payment').value;
+            try {
+                const response = await fetch('/api/v1/order/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ productIds, address, paymentMethod })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Order placed successfully!');
+                    window.location.href = '/api/v1/user/dashboard?token=' + token;
+                } else {
+                    alert(data.message || 'Failed to place order');
+                }
+            } catch (err) {
+                alert('An error occurred. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>
+
+

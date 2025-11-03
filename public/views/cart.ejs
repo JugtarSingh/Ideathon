@@ -57,11 +57,11 @@
                     <% cart.forEach(product => { %>
                         <div class="product-card-wrapper">
                             <div class="product-card">
-                                <img src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=' %>" 
+                                <img src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : '/assets/laptop.jfif' %>" 
                                      alt="<%= product.name || 'Product' %>" 
                                      class="product-image"
                                      loading="lazy"
-                                     onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';"
+                                     onerror="this.onerror=null; this.src='/assets/laptop.jfif';"
                                 <div class="product-info">
                                     <h3 class="product-name"><%= product.name %></h3>
                                     <p class="product-description"><%= product.description %></p>
@@ -78,9 +78,9 @@
                 </div>
                 <div style="text-align: center; margin-top: 2rem; padding: 2rem; background: white; border-radius: 10px; max-width: 600px; margin: 2rem auto;">
                     <h3 style="margin-bottom: 1rem;">Total: $<%= cart.reduce((sum, p) => sum + p.price, 0).toFixed(2) %></h3>
-                    <button class="btn btn-primary" onclick="checkout()" style="padding: 1rem 2rem; font-size: 1.1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    <a class="btn btn-primary" href="/checkout" style="padding: 1rem 2rem; font-size: 1.1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; display:inline-block;">
                         Proceed to Checkout
-                    </button>
+                    </a>
                 </div>
             <% } else if (user) { %>
                 <div class="empty-state">
@@ -146,34 +146,7 @@
             }
         }
 
-        async function checkout() {
-            <% if (user && cart && cart.length > 0) { %>
-                try {
-                    const cart = <%= JSON.stringify(cart.map(p => p._id.toString())) %>;
-                    
-                    const response = await fetch('/api/v1/order/create', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + token
-                        },
-                        body: JSON.stringify({ productIds: cart })
-                    });
-
-                    const data = await response.json();
-                    
-                    if (response.ok) {
-                        alert('Order placed successfully!');
-                        window.location.href = '/api/v1/user/dashboard?token=' + token;
-                    } else {
-                        alert(data.message || 'Failed to place order');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                }
-            <% } %>
-        }
+        // checkout handled via /checkout page now
     </script>
 </body>
 </html>

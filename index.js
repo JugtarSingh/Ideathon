@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { serverConfig, connectToMongoDB, connectToCloudinary } = require('./config')
+const cookieParser = require('cookie-parser');
 const app = express();
 const apiRoutes = require('./routes');
 const homeRoutes = require('./routes/home-routes');
@@ -10,6 +11,7 @@ const { attachUserFromToken } = require('./middleware/auth-middleware');
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Set up EJS view engine
 app.set('view engine', 'ejs');

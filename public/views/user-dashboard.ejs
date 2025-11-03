@@ -21,6 +21,7 @@
             <ul class="navbar-menu">
                 <li><a href="/">Home</a></li>
                 <li><a href="/categories">Categories</a></li>
+                <li><a href="/api/v1/user/dashboard" class="dashboard-link">Dashboard</a></li>
             </ul>
             <div class="navbar-icons">
                 <div class="user-profile">
@@ -58,11 +59,11 @@
                             <% cart.forEach(product => { %>
                                 <div class="product-card-wrapper">
                                     <div class="product-card">
-                                        <img src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=' %>" 
+                                        <img src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : '/assets/laptop.jfif' %>" 
                                              alt="<%= product.name || 'Product' %>" 
                                              class="product-image"
                                              loading="lazy"
-                                             onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';"
+                                             onerror="this.onerror=null; this.src='/assets/laptop.jfif';"
                                         <div class="product-info">
                                             <h3 class="product-name"><%= product.name %></h3>
                                             <p class="product-price">$<%= product.price.toFixed(2) %></p>

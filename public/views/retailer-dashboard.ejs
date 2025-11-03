@@ -23,9 +23,14 @@
                 <li><a href="/categories">Categories</a></li>
             </ul>
             <div class="navbar-icons">
-                <div class="user-profile">
+                <div class="user-profile" onclick="toggleUserMenu(event)">
                     <i class="fas fa-user-circle"></i>
                     <span class="user-profile-name"><%= user.name %></span>
+                    <div id="userMenu" class="user-menu hidden">
+                        <a href="/">Home</a>
+                        <a href="/api/v1/user/seller-info" class="dashboard-link">Seller Info</a>
+                        <button type="button" onclick="logout()" class="logout-btn">Logout</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -91,8 +96,8 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Images * (Multiple files allowed)</label>
-                        <input type="file" name="images" multiple accept="image/*" required>
+                        <label>Images (Multiple files allowed)</label>
+                        <input type="file" name="images" multiple accept="image/*">
                         <div id="imagePreview" class="image-preview"></div>
                     </div>
                     <div class="form-group">
@@ -116,11 +121,11 @@
                                     <% if (product.bestseller) { %>
                                         <span class="bestseller-badge">Bestseller</span>
                                     <% } %>
-                                    <img src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=' %>" 
+                                    <img src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : '/assets/laptop.jfif' %>" 
                                          alt="<%= product.name || 'Product' %>" 
                                          class="product-image"
                                          loading="lazy"
-                                         onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';"
+                                         onerror="this.onerror=null; this.src='/assets/laptop.jfif';"
                                     <div class="product-info">
                                         <h3 class="product-name"><%= product.name %></h3>
                                         <p class="product-description"><%= product.description %></p>
@@ -216,7 +221,7 @@
     <script src="/js/auth-helper.js"></script>
 
     <!-- Edit Product Modal -->
-    <div id="editModal" class="modal hidden">
+    <div id="editModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeEditModal()">&times;</span>
             <h2>Edit Product</h2>
@@ -255,7 +260,7 @@
 
     <style>
         .modal {
-            display: flex;
+            display: none;
             position: fixed;
             z-index: 2000;
             left: 0;
@@ -266,6 +271,7 @@
             align-items: center;
             justify-content: center;
         }
+        .modal.open { display: flex; }
 
         .modal-content {
             background-color: white;
@@ -294,6 +300,27 @@
 
     <script>
         const token = localStorage.getItem('token');
+        function toggleUserMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('userMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', () => {
+            const menu = document.getElementById('userMenu');
+            if (menu) menu.classList.add('hidden');
+        });
+
+        async function logout() {
+            try {
+                await fetch('/api/v1/user/logout', { method: 'GET' });
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            } catch (e) {
+                window.location.href = '/';
+            }
+        }
         const userId = '<%= user._id %>';
 
         // Image preview
@@ -380,14 +407,14 @@
                 // For now, we'll just open the modal with basic fields
                 // You can enhance this to fetch actual product data
                 document.getElementById('editProductId').value = productId;
-                document.getElementById('editModal').classList.remove('hidden');
+                document.getElementById('editModal').classList.add('open');
             } catch (error) {
                 console.error('Error:', error);
             }
         }
 
         function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editModal').classList.remove('open');
         }
 
         document.getElementById('editProductForm').addEventListener('submit', async function(e) {
@@ -459,6 +486,14 @@
             }
         }
     </script>
+    <style>
+        .user-menu { position: absolute; background: #fff; border: 1px solid #eee; border-radius: 8px; right: 0; top: 48px; min-width: 160px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); padding: 8px; z-index: 1500; }
+        .user-menu a, .user-menu button { display: block; padding: 8px 10px; width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer; }
+        .user-menu a:hover, .user-menu button:hover { background: #f5f5f7; }
+        .logout-btn { color: #e74c3c; }
+        .user-profile { position: relative; cursor: pointer; }
+        .hidden { display: none; }
+    </style>
 </body>
 </html>
 
