@@ -153,12 +153,7 @@
                         // Redirect to appropriate dashboard based on user type
                         showMessage('Account created successfully! Redirecting...', 'success');
                         setTimeout(() => {
-                            const userType = data.data.user?.type || data.data?.type;
-                            if (userType === 'seller') {
-                                window.location.href = '/api/v1/user/dashboard?token=' + data.data.token;
-                            } else {
-                                window.location.href = '/api/v1/user/dashboard?token=' + data.data.token;
-                            }
+                            window.top.location.href = '/?token=' + data.data.token;
                         }, 1000);
                     } else {
                         // Fallback to login page
@@ -227,9 +222,9 @@
                         localStorage.setItem('user', JSON.stringify(data.data.user));
                         showLoginMessage('Login successful! Redirecting to dashboard...', 'success');
                         
-                        // Redirect to dashboard after 1 second with token
+                        // Redirect to home after 1 second with token
                         setTimeout(() => {
-                            window.location.href = '/api/v1/user/dashboard?token=' + data.data.token;
+                            window.top.location.href = '/?token=' + data.data.token;
                         }, 1000);
                     } else {
                         showLoginMessage('Login successful but token not received.', 'error');

@@ -45,6 +45,26 @@ async function authenticate(req, res, next) {
     }
 }
 
+function requireSeller(req, res, next) {
+    if (!req.user || req.user.type !== 'seller') {
+        return res.status(StatusCodes.FORBIDDEN).json({
+            success: false,
+            message: 'Seller access required'
+        });
+    }
+    next();
+}
+
+function requireConsumer(req, res, next) {
+    if (!req.user || req.user.type !== 'user') {
+        return res.status(StatusCodes.FORBIDDEN).json({
+            success: false,
+            message: 'Consumer access required'
+        });
+    }
+    next();
+}
+
 // Middleware to attach user info from token stored in request body or query (for EJS views)
 async function attachUserFromToken(req, res, next) {
     try {
@@ -97,6 +117,8 @@ async function attachUserFromToken(req, res, next) {
 
 module.exports = {
     authenticate,
-    attachUserFromToken
+    attachUserFromToken,
+    requireSeller,
+    requireConsumer
 };
 

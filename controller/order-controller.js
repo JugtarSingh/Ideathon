@@ -4,7 +4,7 @@ const { SuccessResponse, ErrorResponse } = require('../utils/common');
 
 async function createOrder(req, res) {
     try {
-        const { productIds } = req.body;
+        const { productIds, address, paymentMethod } = req.body;
         
         if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
             return res.status(StatusCodes.BAD_REQUEST).json({
@@ -13,7 +13,7 @@ async function createOrder(req, res) {
             });
         }
 
-        const order = await OrderService.createOrder(req.user._id, productIds);
+        const order = await OrderService.createOrder(req.user._id, productIds, { address, paymentMethod });
         
         return res.status(StatusCodes.CREATED).json({
             ...SuccessResponse,

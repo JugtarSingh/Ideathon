@@ -4,7 +4,7 @@ const AppError = require('../utils/error/AppError');
 
 async function getHomePage(req, res) {
     try {
-        // Get random products for the landing page with timeout protection
+        // Get latest products for the landing page with timeout protection
         const productsPromise = ProductService.getProducts({});
         const timeoutPromise = new Promise((resolve) => {
             setTimeout(() => resolve([]), 5000); // 5 second timeout
@@ -15,9 +15,8 @@ async function getHomePage(req, res) {
         // Ensure products is an array
         const productsArray = Array.isArray(products) ? products : [];
         
-        // Shuffle and limit to 12 products for display
-        const shuffled = [...productsArray].sort(() => 0.5 - Math.random());
-        const displayProducts = shuffled.slice(0, 12);
+        // Show newest 12 products
+        const displayProducts = productsArray.slice(0, 12);
 
         const user = req.user || null;
         let cartCount = 0;
@@ -139,10 +138,30 @@ async function getCart(req, res) {
     }
 }
 
+async function getCheckout(req, res) {
+    try {
+        const user = req.user || null;
+        if (!user) {
+            return res.redirect('/api/v1/user/login');
+        }
+        await user.populate('cart');
+        const cart = user.cart || [];
+        return res.render('checkout', {
+            user,
+            cart,
+            cartCount: cart.length
+        });
+    } catch (error) {
+        console.error('Error rendering checkout:', error);
+        return res.redirect('/cart');
+    }
+}
+
 module.exports = {
     getHomePage,
     getBestsellers,
     getCategories,
-    getCart
+    getCart,
+    getCheckout
 };
 

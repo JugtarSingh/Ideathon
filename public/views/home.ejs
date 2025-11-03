@@ -26,9 +26,13 @@
             </ul>
             <div class="navbar-icons">
                 <% if (user) { %>
-                    <div class="user-profile" onclick="showProfileMenu()">
+                    <div class="user-profile" onclick="toggleUserMenu(event)">
                         <i class="fas fa-user-circle"></i>
                         <span class="user-profile-name"><%= user.name %></span>
+                        <div id="userMenu" class="user-menu hidden">
+                            <a href="/api/v1/user/dashboard" class="dashboard-link">Dashboard</a>
+                            <button type="button" onclick="logout()" class="logout-btn">Logout</button>
+                        </div>
                     </div>
                     <a href="/cart" class="navbar-icon">
                         <i class="fas fa-shopping-cart"></i>
@@ -71,11 +75,11 @@
                                 <% if (product.bestseller) { %>
                                     <span class="bestseller-badge">Bestseller</span>
                                 <% } %>
-                                <img src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=' %>" 
+                                <img src="<%= (product.image && Array.isArray(product.image) && product.image.length > 0) ? product.image[0] : '/assets/laptop.jfif' %>" 
                                      alt="<%= product.name || 'Product' %>" 
                                      class="product-image"
                                      loading="lazy"
-                                     onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y4ZjlmYSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM3ZjhjOGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';"
+                                     onerror="this.onerror=null; this.src='/assets/laptop.jfif';"
                                 <div class="product-info">
                                     <h3 class="product-name"><%= product.name || 'Unnamed Product' %></h3>
                                     <p class="product-description"><%= product.description || 'No description available' %></p>
@@ -157,24 +161,40 @@
     </footer>
 
     <script src="/js/auth-helper.js"></script>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content modal-lg">
+            <span class="close" onclick="closeLoginModal()">&times;</span>
+            <iframe id="loginFrame" src="" style="width:100%; height:80vh; border:0;"></iframe>
+        </div>
+    </div>
     <script>
         // Get token from localStorage if exists
         const token = localStorage.getItem('token');
         const userData = localStorage.getItem('user');
 
         function showLoginForm() {
-            // Simply redirect to login page instead of using modal
-            window.location.href = '/api/v1/user/login';
+            const frame = document.getElementById('loginFrame');
+            frame.src = '/api/v1/user/login';
+            document.getElementById('loginModal').classList.add('open');
         }
 
-        function showProfileMenu() {
-            const userType = <%= user ? JSON.stringify(user.type) : '"user"' %>;
-            if (userType === 'seller') {
-                window.location.href = '/api/v1/user/dashboard?token=' + token;
-            } else {
-                window.location.href = '/user-dashboard?token=' + token;
-            }
+        function closeLoginModal() {
+            const frame = document.getElementById('loginFrame');
+            frame.src = '';
+            document.getElementById('loginModal').classList.remove('open');
         }
+
+        function toggleUserMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('userMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', () => {
+            const menu = document.getElementById('userMenu');
+            if (menu) menu.classList.add('hidden');
+        });
 
         function viewProduct(productId) {
             const token = localStorage.getItem('token');
@@ -188,6 +208,10 @@
         async function addToCart(productId) {
             <% if (!user) { %>
                 showLoginForm();
+                return;
+            <% } %>
+            <% if (user && user.type === 'seller') { %>
+                alert('Sellers cannot add products to cart.');
                 return;
             <% } %>
 
@@ -215,7 +239,33 @@
             }
         }
 
+        async function logout() {
+            try {
+                await fetch('/api/v1/user/logout', { method: 'GET' });
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+            } catch (e) {
+                window.location.href = '/';
+            }
+        }
     </script>
+
+    <style>
+        .user-menu { position: absolute; background: #fff; border: 1px solid #eee; border-radius: 8px; right: 0; top: 48px; min-width: 160px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); padding: 8px; z-index: 1500; }
+        .user-menu a, .user-menu button { display: block; padding: 8px 10px; width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer; }
+        .user-menu a:hover, .user-menu button:hover { background: #f5f5f7; }
+        .logout-btn { color: #e74c3c; }
+        .user-profile { position: relative; cursor: pointer; }
+        .hidden { display: none; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; }
+        .modal.open { display: flex; }
+        .modal-lg { max-width: 900px; width: 95%; height: 85vh; }
+        .modal-content { background-color: white; padding: 0; border-radius: 10px; width: 90%; max-height: 90vh; overflow: hidden; position: relative; }
+        .close { position: absolute; right: 1rem; top: 1rem; font-size: 2rem; cursor: pointer; color: #999; z-index: 2; }
+        .close:hover { color: #333; }
+        @media (max-width: 600px) { .modal-lg { height: 90vh; } }
+    </style>
 </body>
 </html>
 

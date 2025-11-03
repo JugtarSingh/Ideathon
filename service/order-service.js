@@ -6,7 +6,7 @@ const { StatusCodes } = require('http-status-codes');
 const userRepository = new UserRepository();
 const productRepository = new ProductRepository();
 
-async function createOrder(userId, productIds) {
+async function createOrder(userId, productIds, options = {}) {
     try {
         const user = await userRepository.get({ _id: userId });
         if (!user) {
@@ -39,7 +39,9 @@ async function createOrder(userId, productIds) {
             userId: userId,
             products: products,
             totalAmount: totalAmount,
-            status: 'pending'
+            status: 'pending',
+            address: options.address || null,
+            paymentMethod: options.paymentMethod || 'cod'
         });
 
         // Clear cart

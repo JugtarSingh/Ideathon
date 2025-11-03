@@ -33,17 +33,20 @@ async function createProduct(req, res) {
         // Handle file uploads
         let imageUrls = [];
         
-        if (req.files && req.files.length > 0) {
-            // Upload all images to Cloudinary
-            const uploadPromises = req.files.map(file => uploadToCloudinary(file));
-            imageUrls = await Promise.all(uploadPromises);
-        } else if (req.files && (req.files.images || req.files.image)) {
-            // Handle single file or multiple files in 'images' field
-            const files = req.files.images 
-                ? (Array.isArray(req.files.images) ? req.files.images : [req.files.images])
-                : (Array.isArray(req.files.image) ? req.files.image : [req.files.image]);
-            const uploadPromises = files.map(file => uploadToCloudinary(file));
-            imageUrls = await Promise.all(uploadPromises);
+        try {
+            if (req.files && req.files.length > 0) {
+                const uploadPromises = req.files.map(file => uploadToCloudinary(file));
+                imageUrls = await Promise.all(uploadPromises);
+            } else if (req.files && (req.files.images || req.files.image)) {
+                const files = req.files.images 
+                    ? (Array.isArray(req.files.images) ? req.files.images : [req.files.images])
+                    : (Array.isArray(req.files.image) ? req.files.image : [req.files.image]);
+                const uploadPromises = files.map(file => uploadToCloudinary(file));
+                imageUrls = await Promise.all(uploadPromises);
+            }
+        } catch (imgErr) {
+            console.log('Image upload failed, falling back to default image:', imgErr.message);
+            imageUrls = [];
         }
 
         // Prepare product data
@@ -52,7 +55,7 @@ async function createProduct(req, res) {
             description: req.body.description,
             price: parseFloat(req.body.price),
             category: req.body.category,
-            image: imageUrls.length > 0 ? imageUrls : [],
+            image: imageUrls.length > 0 ? imageUrls : ['/assets/laptop.jfif'],
             bestseller: req.body.bestseller === 'true' || req.body.bestseller === true,
             userId: req.body.userId || req.user?._id
         };

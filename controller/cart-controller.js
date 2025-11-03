@@ -4,6 +4,12 @@ const { SuccessResponse, ErrorResponse } = require('../utils/common');
 
 async function addToCart(req, res) {
     try {
+        if (req.user && req.user.type === 'seller') {
+            return res.status(StatusCodes.FORBIDDEN).json({
+                ...ErrorResponse,
+                message: 'Sellers cannot add products to cart'
+            });
+        }
         const { productId } = req.body;
         if (!productId) {
             return res.status(StatusCodes.BAD_REQUEST).json({

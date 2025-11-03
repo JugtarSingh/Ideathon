@@ -9,6 +9,7 @@ router.get('/', HomeController.getHomePage);
 router.get('/bestsellers', HomeController.getBestsellers);
 router.get('/categories', HomeController.getCategories);
 router.get('/cart', HomeController.getCart);
+router.get('/checkout', HomeController.getCheckout);
 // Product detail route - handled by API routes
 
 module.exports = router;

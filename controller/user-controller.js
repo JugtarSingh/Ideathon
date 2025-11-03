@@ -70,6 +70,13 @@ async function createUser(req,res){
             { expiresIn: '7d' }
         );
 
+        // Set httpOnly cookie for server-rendered pages
+        res.cookie('token', token, {
+            httpOnly: true,
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
         SuccessResponse.data = {
             user: userObject,
             token: token
@@ -177,7 +184,11 @@ async function dashboardRender(req, res) {
             const { OrderService } = require('../service');
             
             const products = await ProductService.getProducts({});
-            const sellerProducts = products.filter(p => p.userId && p.userId.toString() === user._id.toString());
+            const sellerProducts = products.filter(p => {
+                if (!p.userId) return false;
+                const ownerId = p.userId._id ? p.userId._id.toString() : p.userId.toString();
+                return ownerId === user._id.toString();
+            });
             
             const orders = await OrderService.getOrdersBySeller(user._id);
             
@@ -203,6 +214,23 @@ async function dashboardRender(req, res) {
         }
     } catch (error) {
         console.error('Dashboard render error:', error);
+        return res.redirect('/api/v1/user/login');
+    }
+}
+
+async function sellerInfoRender(req, res) {
+    try {
+        const token = req.query.token || req.headers.authorization?.split(' ')[1] || req.cookies?.token;
+        if (!token) return res.redirect('/api/v1/user/login');
+        const decoded = jwt.verify(token, serverConfig.JWT_SECRET);
+        const user = await UserService.getUser({ _id: decoded.id });
+        if (!user || user.type !== 'seller') return res.redirect('/');
+
+        return res.render('seller-info', {
+            user,
+            cartCount: Array.isArray(user.cart) ? user.cart.length : 0
+        });
+    } catch (e) {
         return res.redirect('/api/v1/user/login');
     }
 }
@@ -235,6 +263,13 @@ async function login(req, res) {
                 { expiresIn: '7d' }
             );
         
+            // Set httpOnly cookie for server-rendered pages
+            res.cookie('token', token, {
+                httpOnly: true,
+                sameSite: 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+
             SuccessResponse.data = {
                 user: userObject,
                 token: token
@@ -252,9 +287,26 @@ async function login(req, res) {
     }
 }
 
+async function logout(req, res) {
+    try {
+        res.clearCookie('token');
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            message: 'Logged out successfully'
+        });
+    } catch (error) {
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            message: 'Failed to logout'
+        });
+    }
+}
+
 module.exports = {
     createUser,
     login,
     loginformRender,
-    dashboardRender
+    dashboardRender,
+    sellerInfoRender,
+    logout
 }

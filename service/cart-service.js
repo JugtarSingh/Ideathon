@@ -11,8 +11,8 @@ async function addToCart(userId, productId) {
             throw new AppError('User not found', StatusCodes.NOT_FOUND);
         }
 
-        // Check if product already in cart
-        if (user.cart && user.cart.includes(productId)) {
+        // Check if product already in cart (compare as strings)
+        if (user.cart && user.cart.some(id => id.toString() === productId.toString())) {
             throw new AppError('Product already in cart', StatusCodes.BAD_REQUEST);
         }
 
@@ -43,7 +43,7 @@ async function removeFromCart(userId, productId) {
             throw new AppError('User not found', StatusCodes.NOT_FOUND);
         }
 
-        if (!user.cart || !user.cart.includes(productId)) {
+        if (!user.cart || !user.cart.some(id => id.toString() === productId.toString())) {
             throw new AppError('Product not in cart', StatusCodes.BAD_REQUEST);
         }
 

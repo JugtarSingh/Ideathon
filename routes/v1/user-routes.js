@@ -8,5 +8,7 @@ router
 .post('/login', UserController.login);
 router
 .get('/dashboard', UserController.dashboardRender);
+router.get('/logout', UserController.logout);
+router.get('/seller-info', UserController.sellerInfoRender);
 
 module.exports = router;  
